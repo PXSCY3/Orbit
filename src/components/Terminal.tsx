@@ -24,6 +24,7 @@ export default function Terminal() {
   const sessionToTab = useRef(new Map<string, string>()); // sessionId -> tabId
   const tabSessionsPending = useRef(new Set<string>());
   const lastSent = useRef(new Map<string, { data: string; ts: number }>());
+  const abortControllers = useRef(new Map<string, AbortController>()); // tabId -> AbortController
   const defaultOptions = {
     cursorBlink: true,
     fontSize: 14,
@@ -111,7 +112,7 @@ export default function Terminal() {
 
 
   // initialize terminals for tabs when containers become available
-    useEffect(() => {
+  useEffect(() => {
     for (const tab of tabs) {
       if (!terminals.current.has(tab.id)) {
         const container = terminalContainers.current.get(tab.id);
@@ -143,11 +144,26 @@ export default function Terminal() {
           terminals.current.set(tab.id, { term, fit });
 
           // ensure a backend session exists for this tab (avoid concurrent starts)
+          // Cancel any previous pending session for this tab
+          const existingAbort = abortControllers.current.get(tab.id);
+          if (existingAbort) {
+            existingAbort.abort();
+          }
+
+          const abortController = new AbortController();
+          abortControllers.current.set(tab.id, abortController);
+
           (async () => {
             if (!tabSessions.current.get(tab.id) && !tabSessionsPending.current.has(tab.id)) {
               try {
                 tabSessionsPending.current.add(tab.id);
                 const session: string = await invoke<string>("start_terminal");
+                // Check if this async was cancelled
+                if (abortController.signal.aborted) {
+                  // Clean up the session since we won't use it
+                  try { invoke("close_terminal", { session }); } catch {}
+                  return;
+                }
                 tabSessions.current.set(tab.id, session);
                 sessionToTab.current.set(session, tab.id);
                 setTabs((prev) => prev.map((t) => t.id === tab.id ? { ...t, sessionId: session } : t));
@@ -159,6 +175,14 @@ export default function Terminal() {
         }
       }
     }
+
+    // Cleanup: abort any pending session startups
+    return () => {
+      for (const [, abort] of abortControllers.current.entries()) {
+        abort.abort();
+      }
+      abortControllers.current.clear();
+    };
   }, [tabs]);
 
 
@@ -191,6 +215,12 @@ export default function Terminal() {
                   if (existing) {
                     try { existing.term.dispose(); } catch {}
                     terminals.current.delete(t.id);
+                  }
+                  // cancel any pending session startup
+                  const abort = abortControllers.current.get(t.id);
+                  if (abort) {
+                    abort.abort();
+                    abortControllers.current.delete(t.id);
                   }
                   // close backend session
                   const session = tabSessions.current.get(t.id);

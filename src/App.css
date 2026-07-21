@@ -116,6 +116,39 @@ body,
     border-right: 1px solid #333;
 
     overflow: hidden;
+
+    transition: width 0.2s ease, opacity 0.2s ease;
+}
+
+.sidebar-collapsed {
+    width: 50px;
+    height: 100%;
+    background: #151515;
+    border-right: 1px solid #333;
+    display: flex;
+    justify-content: center;
+    flex-shrink: 0;
+    padding-top: 10px;
+}
+
+.sidebar-toggle {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #3b3b3b;
+    background: #232323;
+    color: #f1f1f1;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 150ms ease, border-color 150ms ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-toggle:hover {
+    background: #2f2f2f;
+    border-color: #4a4a4a;
 }
 
 

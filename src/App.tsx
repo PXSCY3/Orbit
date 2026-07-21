@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 
 import "./App.css";
@@ -12,6 +12,19 @@ function App() {
 
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [showHidden, setShowHidden] = useState(false);
+  const [explorerOpen, setExplorerOpen] = useState(true);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "b") {
+        e.preventDefault();
+        setExplorerOpen(prev => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
 
   function startResize(e: ReactMouseEvent) {
@@ -55,11 +68,23 @@ function App() {
 
       <section className="workspace">
 
+        {!explorerOpen && (
+          <div className="sidebar-collapsed">
+            <button
+              className="sidebar-toggle"
+              onClick={() => setExplorerOpen(true)}
+              title="Open Explorer (Ctrl+B)"
+            >
+              ➜]
+            </button>
+          </div>
+        )}
 
         <aside
           className="sidebar"
           style={{
-            width: sidebarWidth
+            width: explorerOpen ? sidebarWidth : 0,
+            display: explorerOpen ? "block" : "none"
           }}
         >
 
@@ -67,19 +92,18 @@ function App() {
 
         </aside>
 
-
-        <div
-          className="resize-handle"
-          onMouseDown={startResize}
-        />
-
+        {explorerOpen && (
+          <div
+            className="resize-handle"
+            onMouseDown={startResize}
+          />
+        )}
 
         <section className="terminal-panel">
 
           <Terminal />
 
         </section>
-
 
       </section>
 

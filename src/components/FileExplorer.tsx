@@ -139,6 +139,12 @@ export default function FileExplorer({ showHidden }: { showHidden: boolean }) {
           openInTerminal(n);
         },
       },
+      {
+        label: "Open in VS Code",
+        action: (n) => {
+          openInCode(n);
+        },
+      },
       // add more items here
     ];
   }
@@ -198,6 +204,14 @@ export default function FileExplorer({ showHidden }: { showHidden: boolean }) {
     await invoke("write_terminal", {
       input: command
     });
+  }
+
+  async function openInCode(entry: FileEntry) {
+    try {
+      await invoke("open_in_vscode", { path: entry.path });
+    } catch (error) {
+      console.error("Failed to open in VS Code:", error);
+    }
   }
 
   useEffect(() => {

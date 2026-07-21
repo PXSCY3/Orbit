@@ -1,6 +1,6 @@
 [package]
 name = "Orbit"
-version = "1.3.0"
+version = "1.3.5"
 description = "File Manager & Terminal"
 authors = ["Gage Michael"]
 edition = "2021"

@@ -105,3 +105,26 @@ pub fn read_directory(
 pub fn get_home_directory() -> String {
     std::env::var("HOME").unwrap_or_else(|_| "/home".into())
 }
+
+#[tauri::command]
+pub fn open_in_vscode(path: String) -> Result<(), String> {
+    let parent = if std::fs::metadata(&path)
+        .map_err(|e| e.to_string())?
+        .is_dir() {
+        path.clone()
+    } else {
+        std::path::Path::new(&path)
+            .parent()
+            .ok_or("Invalid path".to_string())?
+            .to_string_lossy()
+            .to_string()
+    };
+
+    std::process::Command::new("code")
+        .arg(".")
+        .current_dir(&parent)
+        .spawn()
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}

@@ -25,6 +25,7 @@ pub fn run() {
             tauri::generate_handler![
                 filesystem::read_directory,
                 filesystem::get_home_directory,
+                filesystem::open_in_vscode,
 
                 terminal::start_terminal,
                 terminal::write_terminal,
