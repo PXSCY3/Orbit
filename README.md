@@ -2,6 +2,8 @@
 
 Orbit is a Tauri desktop application built with React and TypeScript.
 
+<img width="1920" height="1040" alt="orbit-screenshot" src="https://github.com/user-attachments/assets/c3d86db7-a564-4c4f-b7f0-113b0361f026" />
+
 ## Recommended IDE Setup
 
 - [VS Code](https://code.visualstudio.com/)
