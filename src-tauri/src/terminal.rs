@@ -22,6 +22,7 @@ fn next_session_id() -> String {
 
 pub struct TerminalState {
     pub writers: Arc<Mutex<HashMap<String, Box<dyn Write + Send>>>>,
+    pub owners: Arc<Mutex<HashMap<String, String>>>, // session_id -> window_label
 }
 
 #[derive(Serialize, Clone)]
@@ -32,6 +33,7 @@ struct TerminalOutput {
 
 #[tauri::command]
 pub fn start_terminal(
+    window: tauri::Window,
     app: tauri::AppHandle,
     state: tauri::State<TerminalState>,
 ) -> Result<String, String> {
@@ -59,11 +61,17 @@ pub fn start_terminal(
 
     let session_id = next_session_id();
 
+    let owner = window.label().to_string();
     state
         .writers
         .lock()
         .unwrap()
         .insert(session_id.clone(), writer);
+    state
+        .owners
+        .lock()
+        .unwrap()
+        .insert(session_id.clone(), owner.clone());
 
     // spawn reader thread
     let thread_session = session_id.clone();
@@ -74,7 +82,7 @@ pub fn start_terminal(
             match reader.read(&mut buffer) {
                 Ok(size) if size > 0 => {
                     let output = String::from_utf8_lossy(&buffer[..size]).to_string();
-                    let _ = app.emit("terminal-output", TerminalOutput { id: thread_session.clone(), payload: output });
+                    let _ = app.emit_to(&owner, "terminal-output", TerminalOutput { id: thread_session.clone(), payload: output });
                 }
                 _ => break,
             }
@@ -89,23 +97,43 @@ pub fn start_terminal(
 pub fn write_terminal(
     session: String,
     input: String,
+    window: tauri::Window,
     state: tauri::State<TerminalState>,
 ) -> Result<(), String> {
 
-    let mut writers = state.writers.lock().unwrap();
-    match writers.get_mut(&session) {
-        Some(writer) => {
-            writer.write_all(input.as_bytes()).map_err(|e| e.to_string())?;
-            writer.flush().map_err(|e| e.to_string())?;
-            Ok(())
+    // ensure caller owns the session
+    let caller = window.label();
+    let owners = state.owners.lock().unwrap();
+    match owners.get(&session) {
+        Some(owner) if owner == &caller => {
+            drop(owners);
+            let mut writers = state.writers.lock().unwrap();
+            match writers.get_mut(&session) {
+                Some(writer) => {
+                    writer.write_all(input.as_bytes()).map_err(|e| e.to_string())?;
+                    writer.flush().map_err(|e| e.to_string())?;
+                    Ok(())
+                }
+                None => Err("Session not found".into()),
+            }
         }
-        None => Err("Session not found".into()),
+        _ => Err("Not authorized for session".into()),
     }
 }
 
 #[tauri::command]
-pub fn close_terminal(session: String, state: tauri::State<TerminalState>) -> Result<(), String> {
-    let mut writers = state.writers.lock().unwrap();
-    writers.remove(&session);
-    Ok(())
+pub fn close_terminal(session: String, window: tauri::Window, state: tauri::State<TerminalState>) -> Result<(), String> {
+    // only allow owner to close
+    let caller = window.label();
+    let mut owners = state.owners.lock().unwrap();
+    match owners.get(&session) {
+        Some(owner) if owner == &caller => {
+            owners.remove(&session);
+            drop(owners);
+            let mut writers = state.writers.lock().unwrap();
+            writers.remove(&session);
+            Ok(())
+        }
+        _ => Err("Not authorized to close session".into()),
+    }
 }

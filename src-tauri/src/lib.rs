@@ -16,6 +16,7 @@ pub fn run() {
         .manage(
             terminal::TerminalState {
                 writers: std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
+                owners: std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             }
         )
 
