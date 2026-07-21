@@ -1,0 +1,125 @@
+.terminal {
+
+    display: flex;
+
+    flex-direction: column;
+
+    flex: 1;
+
+    min-height: 0;
+
+    width: 100%;
+
+    background: #222;
+
+    color: #d8d8d8;
+}
+
+.terminalHeader {
+    height: 42px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    background: #1d1d1d;
+
+    border-bottom: 1px solid #333;
+}
+
+.terminalTabs {
+    display: flex;
+    height: 100%;
+}
+
+.tab {
+    padding: 0 10px;
+    border: none;
+    background: transparent;
+    color: white;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.tab:hover {
+    background: #2d2d2d;
+}
+
+.tab.active {
+    background: #2d2d2d;
+}
+
+.tab .tab-title {
+    display: inline-block;
+    min-width: 36px;
+    text-align: center;
+}
+
+.tab .tab-close {
+    background: transparent;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.tab .tab-close:hover {
+    color: #fff;
+    background: #3a3a3a;
+}
+
+.terminalOutput {
+    flex: 1;
+
+    min-height: 0;
+    height: 0;
+
+    overflow: hidden;
+
+    padding: 5px;
+
+    font-family: "JetBrains Mono", monospace;
+    font-size: 14px;
+}
+
+.terminalOutput .xterm {
+    height: 100%;
+}
+
+.terminalLine {
+    white-space: pre-wrap;
+}
+
+.terminalInputBar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 12px 16px;
+
+    border-top: 1px solid #333;
+
+    font-family: "JetBrains Mono", monospace;
+}
+
+.prompt {
+    color: #4ade80;
+    white-space: nowrap;
+}
+
+.terminalInputBar input {
+    flex: 1;
+
+    border: none;
+    outline: none;
+
+    background: transparent;
+    color: white;
+
+    font-family: inherit;
+    font-size: 14px;
+}
